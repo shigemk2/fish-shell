@@ -94,13 +94,13 @@ for i in "$INPUTDIR"/*.txt; do
 	echo  "/** \page" $BASENAME > $TMPFILE
 	cat $i >>$TMPFILE
 	echo "*/" >>$TMPFILE
-	cat $TMPFILE | sed "s/\\\section $BASENAME $BASENAME/\\\section $BASENAME-man $BASENAME/" > $INPUTFILE
+	cat $TMPFILE | /usr/bin/sed "s/\\\section $BASENAME $BASENAME/\\\section $BASENAME-man $BASENAME/" > $INPUTFILE
 done
 
 # Make some extra stuff to pass to doxygen
 # Input is kept as . because we cd to the input directory beforehand
 # This prevents doxygen from generating "documentation" for intermediate directories
-PROJECT_NUMBER=$(echo "$FISH_BUILD_VERSION" | env sed "s/-.*//")
+PROJECT_NUMBER=$(echo "$FISH_BUILD_VERSION" | env /usr/bin/sed "s/-.*//")
 echo "PROJECT_NUMBER: $FISH_BUILD_VERSION"
 DOXYPARAMS=$(cat <<EOF
 PROJECT_NUMBER=${PROJECT_NUMBER}
@@ -130,12 +130,11 @@ if test "$RESULT" = 0 ; then
 	for i in "$INPUTDIR"/*.txt; do
 		# It would be nice to use -i here for edit in place, but that is not portable
 		CMD_NAME=`basename "$i" .txt`;
-		sed < ${CMD_NAME}.1 > ${CMD_NAME}.1.tmp-delete-quote \
+		/usr/bin/sed < ${CMD_NAME}.1 > ${CMD_NAME}.1.tmp-delete-quote \
 			-e "s/^\\.SH \"\(.*\)\"/\\.SH \1\\n/"
-		sed < ${CMD_NAME}.1.tmp-delete-quote > ${CMD_NAME}.1.tmp-bold \
+		/usr/bin/sed < ${CMD_NAME}.1.tmp-delete-quote > ${CMD_NAME}.1.tmp-bold \
 			-e "s/^\\.SH \("$CMD_NAME"\) \\-/\\.SH \\\fB\1\\\fP \\-/"
-		sed < ${CMD_NAME}.1.tmp-bold > ${CMD_NAME}.1.tmp-shape \
-			-z "s/\\.SH NAME\\n$CMD_NAME \\\- \\n\\.SH /\\.SH NAME\\n/"
+		cat ${CMD_NAME}.1.tmp-bold | tr ".SH NAME\n$CMD_NAME - \n.SH ", ".SH NAME\n" > ${CMD_NAME}.1.tmp-shape
 		cp "${CMD_NAME}.1.tmp-shape" "${CMD_NAME}.1"
 		rm "${CMD_NAME}.1.tmp-delete-quote" "${CMD_NAME}.1.tmp-bold" "${CMD_NAME}.1.tmp-shape"
 	done
